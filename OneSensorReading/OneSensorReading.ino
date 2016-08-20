@@ -1,14 +1,20 @@
 void setup() {
   Serial.begin(9600);
   pinMode(13, OUTPUT);
-  pinMode(3, INPUT);
+  pinMode(2,INPUT); 
 }
 
 void loop() {
-    uint8_t currentReading = PIND;
-    Serial.println(bitRead(currentReading,3), BIN);
+    byte currentReading = GPIOD_PDIR & 0xFF;
+    Serial.println(currentReading, HEX);
+
+
+
 
 
 }
+
+
+byte allEight = GPIOD_PDIR & 0xFF;
 
 
