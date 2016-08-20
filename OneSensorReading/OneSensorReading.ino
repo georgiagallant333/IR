@@ -7,14 +7,6 @@ void setup() {
 void loop() {
     byte currentReading = GPIOD_PDIR & 0xFF;
     Serial.println(currentReading, HEX);
-
-
-
-
-
 }
-
-
-byte allEight = GPIOD_PDIR & 0xFF;
 
 
