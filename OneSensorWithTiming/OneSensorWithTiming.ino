@@ -1,4 +1,4 @@
-#define NUMSAMPLES 100
+#define NUMSAMPLES 10
 
 int incrementSamples = 0;
 long startTime = 0;
@@ -9,33 +9,34 @@ long sensorTimesHigh[NUMSAMPLES];
 void setup() {
   Serial.begin(115200);
   pinMode(13, OUTPUT);
-  delay(5000);
-  while (incrementSamples < NUMSAMPLES) {
-    digitalWrite(13, HIGH);
-    uint8_t currentReading = PIND;
-    uint8_t pin2 = bitRead(currentReading, 0);
-    Serial.println(pin2);
-    if (pastReading == 0 && currentReading == 1) {
+  pinMode(2, INPUT);
+
+}
+
+void loop() {
+  if(incrementSamples < NUMSAMPLES){
+    //byte currentReading = bitRead(PIND, 2);
+    byte currentReading = GPIOD_PDIR & 0xFF;
+    if (pastReading == 1 && currentReading == 0) {
       startTime = micros();
     }
-    else if (pastReading == 1 && currentReading == 0) {
+    else if (pastReading == 0 && currentReading == 1) {
       finalTime = micros() - startTime;
       sensorTimesHigh[incrementSamples] = finalTime;
       incrementSamples++;
-
+      digitalWrite(13, HIGH);
     }
     pastReading = currentReading;
   }
+
+ if(incrementSamples == NUMSAMPLES){
     digitalWrite(13, LOW);
     incrementSamples = 0;
     Serial.println(" ");
     for (int a = 0; a < NUMSAMPLES; a++) {
       Serial.println(sensorTimesHigh[a]);
+    }
   }
-}
-
-void loop() {
-
 
 }
 
