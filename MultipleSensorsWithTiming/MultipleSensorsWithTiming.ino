@@ -23,12 +23,13 @@ void loop() {
   readSensors();
   if (endLoop == 1) {
     resetVariables();
+    sortArray();
     printSensors();
   }
 }
 void printSensors() {
   Serial.println("\nNEW SERIES");
-  for (int a = 1; a < NUMSAMPLES - 1; a++) {
+  for (int a = 0; a < NUMSAMPLES-2; a++) {
     for (int b = 0; b < NUMSENSORS; b++) {
       Serial.print(b);
       Serial.print(": ");
@@ -37,6 +38,24 @@ void printSensors() {
     }
     Serial.println(" ");
   }
+}
+
+void sortArray(){
+  for(int i = 0; i < NUMSENSORS; i++){
+    insertion_sort(sensorTimesHigh[i], NUMSAMPLES);
+  }
+}
+
+void insertion_sort (long arr[], int length){
+    int j, temp;
+  for (int j = 1; j < length; j++){
+    while (j > 0 && arr[j] < arr[j-1]){
+        temp = arr[j];
+        arr[j] = arr[j-1];
+        arr[j-1] = temp;
+        j--;
+        }
+    }
 }
 
 
