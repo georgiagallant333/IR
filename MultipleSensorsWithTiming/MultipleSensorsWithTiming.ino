@@ -19,6 +19,8 @@ byte pastReading[NUMSENSORS]; //stores the last reading for each sensor
 boolean keepReading = 1; //keepReading goes to 0 if 20 samples have been taken
 long noBallStartTime; //this reads the time when the first samples is taken
 long sensorTimesHigh[NUMSENSORS][NUMSAMPLES]; //stores pulse duration for each sensor, and which sample that pulse was taken
+int averages[NUMSENSORS]; //keeps track of the average time for pulse of 10 around median for each sensor
+int closestSensor;
 
 void setup() {
   Serial.begin(9600);
@@ -31,7 +33,6 @@ void setup() {
 
 void loop() {
   readSensors(); //reads sensors and takes samples and sees if there is a ball or not
-
 }
 
 void readSensors() {
@@ -44,7 +45,12 @@ void readSensors() {
         startTime[x] = micros();
       }
       else if (pastReading[x] == 0 && currentReading[x] == 1) { //if ball's pulse just went low stop timer
-        sensorTimesHigh[x][incrementSamples[x]] = micros() - startTime[x]; //store amount of time for pulse in array
+        if(micros() - startTime[x] > 1000){ //if pulse is too long
+          sensorTimesHigh[x][incrementSamples[x]] = 0;
+        }
+        else{
+          sensorTimesHigh[x][incrementSamples[x]] = micros() - startTime[x]; //store amount of time for pulse in array
+        }
         incrementSamples[x]++; //increment the sample you are on by 1
       }
       if (incrementSamples[x] == NUMSAMPLES) { //the first sensor to have the correct number of samples
@@ -53,7 +59,7 @@ void readSensors() {
       pastReading[x] = currentReading[x]; //every time it cycles the pastReading is set to the current Reading
     }
     if (micros() - noBallStartTime > 20000) { //if the current time - the time it was from when the first sample of this cycle was taken is long than there isn't a ball
-      //Serial.println("NO BALL");
+      Serial.println("NO BALL");
     }
     else { //otherwise there is a ball
       //Serial.println("BALL");
@@ -69,7 +75,13 @@ void readSensors() {
 void sortArrayAndGetAverage() {
   for (int i = 0; i < NUMSENSORS; i++) {
     insertion_sort(sensorTimesHigh[i], NUMSAMPLES); //sorts the times for each sensor in increasing order
-    getAverage(sensorTimesHigh[i]);
+    averages[i] = getAverage(sensorTimesHigh[i]);
+    Serial.print(i);
+    Serial.print(": ");
+    Serial.println(averages[i]);
+    if(averages[i] < averages[closestSensor]){
+       closestSensor = i;
+    }
   }
 }
 
@@ -104,7 +116,11 @@ void resetVariables() {
   for (int i = 0; i < NUMSENSORS; i++) { 
     startTime[i] = 0; //resetting startTime and pastReadings to 0
     pastReading[i] = 0;
+    for(int x = 0; x < NUMSAMPLES; x++){ //resetting sensorTimesHigh to 0
+      sensorTimesHigh[i][x] = 0;
+    }
   }
+ 
 }
 
 void printSensors() {
