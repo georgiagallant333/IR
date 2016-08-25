@@ -6,7 +6,7 @@ long startTime[7];
 byte currentReading[7];
 byte pastReading[7];
 boolean endLoop = 0;
-
+long noBallStartTime;
 long sensorTimesHigh[NUMSENSORS][NUMSAMPLES];
 
 
@@ -17,14 +17,15 @@ void setup() {
   for (int x = 2; x < NUMSENSORS + 2; x++) {
     pinMode(x, INPUT);
   }
+  noBallStartTime = micros();
 }
 
 void loop() {
   readSensors();
   if (endLoop == 1) {
-    resetVariables();
     sortArrayAndGetAverage();
-    printSensors();
+    resetVariables();
+    // printSensors();
   }
 }
 void printSensors() {
@@ -42,23 +43,24 @@ void printSensors() {
   }
 }
 
-void getAverage(long arr[]) {
+long getAverage(long arr[]) {
   long sum = 0;
   long avg = 0;
-  for(int i = ((NUMSAMPLES / 2)-5); i < ((NUMSAMPLES / 2)+5); i++){
+  for (int i = ((NUMSAMPLES / 2) - 5); i < ((NUMSAMPLES / 2) + 5); i++) {
     sum = sum + arr[i];
   }
-  avg = (float)sum/10;
-  Serial.print("AVERAGE: ");
-  Serial.print(avg);
+  avg = (float)sum / 10;
+  return avg;
 }
 
 void sortArrayAndGetAverage() {
+  boolean noBall[7];
   for (int i = 0; i < NUMSENSORS; i++) {
     insertion_sort(sensorTimesHigh[i], NUMSAMPLES);
     getAverage(sensorTimesHigh[i]);
   }
 }
+
 
 void insertion_sort (long arr[], int length) {
   int j, temp;
@@ -74,7 +76,8 @@ void insertion_sort (long arr[], int length) {
 
 
 void resetVariables() {
-  endLoop = 0;
+  noBallStartTime = micros();
+    endLoop = 0;
   for (int i = 0; i < NUMSENSORS; i++) {
     incrementSamples[i] = 0;
   }
@@ -101,6 +104,12 @@ void readSensors() {
         endLoop = 1;
       }
       pastReading[x] = currentReading[x];
+    }
+    if (micros() - noBallStartTime > 20000) {
+      Serial.println("NO BALL");
+    }
+    else{
+      Serial.println("BALL");
     }
   }
 }
