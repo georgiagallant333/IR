@@ -21,6 +21,7 @@ long noBallStartTime; //this reads the time when the first samples is taken
 long sensorTimesHigh[NUMSENSORS][NUMSAMPLES]; //stores pulse duration for each sensor, and which sample that pulse was taken
 int averages[NUMSENSORS]; //keeps track of the average time for pulse of 10 around median for each sensor
 int closestSensor;
+int angles[] = {0, 30, 60, 90, 120, 150, 180};
 
 void setup() {
   Serial.begin(9600);
@@ -41,10 +42,10 @@ void readSensors() {
       currentReading[x - 2] = digitalReadFast(x);
     }
     for (int x = 0; x < NUMSENSORS; x++) { //cycles through sensors
-      if (pastReading[x] == 1 && currentReading[x] == 0) { //if ball's pulse just went high than start timer
+      if (pastReading[x] == 1 && currentReading[x] == 0) { //if ball's pulse just went high, then start timer
         startTime[x] = micros();
       }
-      else if (pastReading[x] == 0 && currentReading[x] == 1) { //if ball's pulse just went low stop timer
+      else if (pastReading[x] == 0 && currentReading[x] == 1) { //if ball's pulse just went low, stop timer
         if(micros() - startTime[x] > 1000){ //if pulse is too long
           sensorTimesHigh[x][incrementSamples[x]] = 0;
         }
@@ -68,6 +69,7 @@ void readSensors() {
   else if (keepReading == 0) { //if 20 samples have been taken
     sortArrayAndGetAverage(); //sorts each sensors samples in increasing order get average of the 10 around the median
     resetVariables();
+    findAngle();
     //printSensors();
   }
 }
@@ -76,17 +78,33 @@ void sortArrayAndGetAverage() {
   for (int i = 0; i < NUMSENSORS; i++) {
     insertion_sort(sensorTimesHigh[i], NUMSAMPLES); //sorts the times for each sensor in increasing order
     averages[i] = getAverage(sensorTimesHigh[i]);
-    Serial.print(i);
-    Serial.print(": ");
-    Serial.println(averages[i]);
+    //Serial.print(averages[i]);
+    //Serial.print("  ");
     if(averages[i] < averages[closestSensor]){
        closestSensor = i;
     }
   }
+  //Serial.println(" ");
 }
 
+void findAngle(){
+  int difference = averages[closestSensor + 1] - averages[closestSensor - 1];
+  int ballAngle;
+  Serial.print(closestSensor);
+//  Serial.print(", ");
+//  Serial.print(difference);
+//  Serial.print(", ");
+  if(difference > 0) {
+    ballAngle = angles[closestSensor] + (difference/5.3);
+  }
+  else{
+    ballAngle = angles[closestSensor] - (difference/5.3);
+  }
+  //Serial.println(ballAngle);
+}
 void insertion_sort (long arr[], int length) { //insertion sort goes through array once, fast sort
-  int j, temp;
+  int j
+  long temp;
   for (int j = 1; j < length; j++) {
     while (j > 0 && arr[j] < arr[j - 1]) {
       temp = arr[j];
@@ -103,7 +121,7 @@ long getAverage(long arr[]) {
   for (int i = ((NUMSAMPLES / 2) - 5) ; i < ((NUMSAMPLES / 2) + 5); i++) { // for( int i =  median - 5; i < median + 5; i++)
     sum = sum + arr[i];
   }
-  avg = (float)sum / 10;
+  avg = sum / 10;
   return avg;
 }
 
@@ -115,7 +133,6 @@ void resetVariables() {
   }
   for (int i = 0; i < NUMSENSORS; i++) { 
     startTime[i] = 0; //resetting startTime and pastReadings to 0
-    pastReading[i] = 0;
     for(int x = 0; x < NUMSAMPLES; x++){ //resetting sensorTimesHigh to 0
       sensorTimesHigh[i][x] = 0;
     }
