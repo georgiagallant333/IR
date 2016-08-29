@@ -9,19 +9,20 @@
 
 */
 
-#define NUMSAMPLES 20 //will disregard the last two samples (this is the number of pulses it takes before you can print/calculate average/etc.)
-#define NUMSENSORS 7
+#define NUMSAMPLES 10 //will disregard the last two samples (this is the number of pulses it takes before you can print/calculate average/etc.)
+#define NUMSENSORS 1
 
 int incrementSamples[NUMSENSORS]; //this increments separately for each sensor every pulse you count
 long startTime[NUMSENSORS]; //this reads the time when the start of the pulse is read
 byte currentReading[NUMSENSORS]; //reads the raw data for each sensor
-byte pastReading[NUMSENSORS] = {1, 1, 1, 1, 1, 1, 1}; //stores the last reading for each sensor
+byte pastReading[NUMSENSORS] = {1};//{1, 1, 1, 1, 1, 1, 1}; //stores the last reading for each sensor
 boolean keepReading = 1; //keepReading goes to 0 if 20 samples have been taken
 long noBallStartTime; //this reads the time when the first samples is taken
 long sensorTimesHigh[NUMSENSORS][NUMSAMPLES]; //stores pulse duration for each sensor, and which sample that pulse was taken
 int averages[NUMSENSORS]; //keeps track of the average time for pulse of 10 around median for each sensor
 int closestSensor;
 int angles[] = {0, 30, 60, 90, 120, 150, 180};
+long pings[NUMSENSORS];
 
 void setup() {
   Serial.begin(9600);
@@ -29,13 +30,15 @@ void setup() {
   for (int x = 2; x < NUMSENSORS + 2; x++) {   //initializing pins starting on pin 2
     pinMode(x, INPUT);
   }
+  pinMode(14, OUTPUT);
   noBallStartTime = micros(); //start ball timer
 }
 
 void loop() {
   readSensors(); //reads sensors and takes samples and sees if there is a ball or not
-  printSensors();
-  resetVariables();
+  //  printSensors();
+  //   resetVariables();
+  printPings();
 }
 
 void readSensors() {
@@ -51,6 +54,7 @@ void readSensors() {
         sensorTimesHigh[x][incrementSamples[x]] = micros() - startTime[x]; //store amount of time for pulse in array
         incrementSamples[x]++; //increment the sample you are on by 1
       }
+      pings[x]=pings[x]+1;
       if (incrementSamples[x] == NUMSAMPLES) { //the first sensor to have the correct number of samples
         keepReading = 0; //don't keep reading a break out of keepReading loop
         break;
@@ -145,7 +149,15 @@ void printSensors() {
     }
     Serial.println(" ");
   }
-
 }
 
+void printPings() {
+  Serial.println("\nNEW SERIES");
+  for (int b = 0; b < NUMSENSORS; b++) {
+    Serial.print(pings[b]);
+    pings[b]=0;
+    Serial.print(" ");
+  }
+  Serial.println(" ");
+}
 
